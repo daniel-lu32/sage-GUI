@@ -33,18 +33,18 @@ class RemoteProjectFileSystem:
         self._home_path = home_path
 
         home_fs = self.fs.opendir(home_path)
-        if not home_fs.exists("projects"):
-            home_fs.makedir("projects")
+        if not home_fs.exists("sage_projects"):
+            home_fs.makedir("sage_projects")
 
-        self.project_fs = home_fs.opendir("projects")
+        self.project_fs = home_fs.opendir("sage_projects")
 
-    def get_data_file_contents(self, project_name: str, file_name: str) -> bytes:
-        file_path = f"{project_name}/data/{file_name}"
+    def get_fasta_contents(self, project_name: str, file_name: str) -> bytes:
+        file_path = f"{project_name}/fasta/{file_name}"
         with self.project_fs.open(file_path, 'rb') as file:
             return file.read()
 
-    def get_spec_lib_contents(self, project_name: str, file_name: str) -> bytes:
-        file_path = f"{project_name}/spec_lib/{file_name}"
+    def get_spectra_contents(self, project_name: str, file_name: str) -> bytes:
+        file_path = f"{project_name}/spectra/{file_name}"
         with self.project_fs.open(file_path, 'rb') as file:
             return file.read()
 
@@ -68,9 +68,9 @@ class RemoteProjectFileSystem:
             raise FileExistsError(f"Project '{project_name}' already exists.")
 
         project_fs = self.project_fs.makedir(project_path)
-        project_fs.makedir("data")
+        project_fs.makedir("fasta")
         project_fs.makedir("search")
-        project_fs.makedir("spec_lib")
+        project_fs.makedir("spectra")
 
     def remove_project(self, project_name: str):
         project_path = f"{project_name}"
@@ -82,49 +82,49 @@ class RemoteProjectFileSystem:
     def list_projects(self) -> List[str]:
         return self.project_fs.listdir(".")
 
-    def add_data_file(self, project_name: str, file_name: str, data: bytes):
-        data_path = f"{project_name}/data/{file_name}"
-        if not self.project_fs.exists(f"{project_name}/data"):
-            raise ResourceNotFound(f"Project '{project_name}' does not exist or has no 'data' directory.")
+    def add_fasta_file(self, project_name: str, file_name: str, data: bytes):
+        fasta_path = f"{project_name}/fasta/{file_name}"
+        if not self.project_fs.exists(f"{project_name}/fasta"):
+            raise ResourceNotFound(f"Project '{project_name}' does not exist or has no 'fasta' directory.")
 
-        with self.project_fs.open(data_path, 'wb') as data_file:
-            data_file.write(data)
+        with self.project_fs.open(fasta_path, 'wb') as fasta_file:
+            fasta_file.write(data)
 
-    def remove_data_file(self, project_name: str, file_name: str):
-        data_path = f"{project_name}/data/{file_name}"
-        if not self.project_fs.exists(data_path):
-            raise ResourceNotFound(f"Data file '{file_name}' not found in project '{project_name}'.")
+    def remove_fasta_file(self, project_name: str, file_name: str):
+        fasta_path = f"{project_name}/fasta/{file_name}"
+        if not self.project_fs.exists(fasta_path):
+            raise ResourceNotFound(f"FASTA file '{file_name}' not found in project '{project_name}'.")
 
-        self.project_fs.remove(data_path)
+        self.project_fs.remove(fasta_path)
 
-    def list_data_files(self, project_name: str) -> List[str]:
-        data_dir = f"{project_name}/data"
-        if not self.project_fs.exists(data_dir):
-            raise ResourceNotFound(f"No data directory found for project '{project_name}'.")
-        return self.project_fs.listdir(data_dir)
+    def list_fasta_files(self, project_name: str) -> List[str]:
+        fasta_dir = f"{project_name}/fasta"
+        if not self.project_fs.exists(fasta_dir):
+            raise ResourceNotFound(f"No fasta directory found for project '{project_name}'.")
+        return self.project_fs.listdir(fasta_dir)
 
-    def add_spec_lib(self, project_name: str, file_name: str, data: bytes):
-        spec_lib_path = f"{project_name}/spec_lib/{file_name}"
-        if not self.project_fs.exists(f"{project_name}/spec_lib"):
-            raise ResourceNotFound(f"Project '{project_name}' does not exist or has no 'spec_lib' directory.")
+    def add_spectra(self, project_name: str, file_name: str, data: bytes):
+        spectra_path = f"{project_name}/spectra/{file_name}"
+        if not self.project_fs.exists(f"{project_name}/spectra"):
+            raise ResourceNotFound(f"Project '{project_name}' does not exist or has no 'spectra' directory.")
 
-        with self.project_fs.open(spec_lib_path, 'wb') as spec_lib_file:
-            spec_lib_file.write(data)
+        with self.project_fs.open(spectra_path, 'wb') as spectra_file:
+            spectra_file.write(data)
 
-    def remove_spec_lib(self, project_name: str, file_name: str):
-        spec_lib_path = f"{project_name}/spec_lib/{file_name}"
-        if not self.project_fs.exists(spec_lib_path):
-            raise ResourceNotFound(f"Spectral library file '{file_name}' not found in project '{project_name}'.")
+    def remove_spectra(self, project_name: str, file_name: str):
+        spectra_path = f"{project_name}/spectra/{file_name}"
+        if not self.project_fs.exists(spectra_path):
+            raise ResourceNotFound(f"Spectra '{file_name}' not found in project '{project_name}'.")
 
-        self.project_fs.remove(spec_lib_path)
+        self.project_fs.remove(spectra_path)
 
-    def list_spec_lib_files(self, project_name: str) -> List[str]:
-        spec_lib_dir = f"{project_name}/spec_lib"
-        if not self.project_fs.exists(spec_lib_dir):
-            raise ResourceNotFound(f"No spectral library directory found for project '{project_name}'.")
-        return self.project_fs.listdir(spec_lib_dir)
+    def list_spectra(self, project_name: str) -> List[str]:
+        spectra_dir = f"{project_name}/spectra"
+        if not self.project_fs.exists(spectra_dir):
+            raise ResourceNotFound(f"No spectra directory found for project '{project_name}'.")
+        return self.project_fs.listdir(spectra_dir)
 
-    def add_search(self, project_name: str, search_name: str, data: Dict[str, Any], selected_data_files, selected_spec_lib):
+    def add_search(self, project_name: str, search_name: str, data: Dict[str, Any], selected_fasta_files, selected_spectra):
         project_dir = f"{project_name}"
         search_dir = f"{project_name}/search/{search_name}"
 
@@ -139,107 +139,10 @@ class RemoteProjectFileSystem:
         # Create the search directory
         self.project_fs.makedir(search_dir, recreate=True)
 
-        # TODO: add command additions from the "Precursor Ion Generation" section of DIA-NN
         command = ""
 
-        data_directory = f"{project_name}/data"
-        data_files = selected_data_files
-        for data_file in data_files:
-            command += f" --f {self._home_path}/projects/{data_directory}/{data_file}"
-
-        spec_lib_directory = f"{project_name}/spec_lib"
-        spec_lib = selected_spec_lib
-        command += f" --lib {self._home_path}/projects/{spec_lib_directory}/{spec_lib}"
-
-        command += " --verbose " + str(data['log_level'])
-        command += f" --out {self._home_path}/projects/{search_dir}/report.tsv"
-        command += " --qvalue " + str(data['precursor_fdr']/100)
-
-        if data['quantities_matrices']:
-            command += " --matrices"
-
-        if data['speed_and_ram_usage'] == "Low RAM usage":
-            command += " --min-corr 1.0 --corr-diff 1.0 --time-corr-only"
-        elif data['speed_and_ram_usage'] == "Low RAM & high speed":
-            command += " --min-corr 2.0 --corr-diff 1.0 --time-corr-only"
-        elif data['speed_and_ram_usage'] == "Ultra-fast":
-            command += " --min-corr 2.0 --corr-diff 1.0 --time-corr-only --extracted-ms1"
-
-        if data['prosit']:
-            command += " --prosit"
-        if data['xics']:
-            command += " --xic"
-
-        command += " --unimod4"
-
-        if data['scan_window'] != 0:
-            command += " --window " + str(data['scan_window'])
-        if data['mass_accuracy'] != 0:
-            command += " --mass-acc " + str(data['mass_accuracy'])
-        if data['ms1_accuracy'] != 0:
-            command += " --mass-acc-ms1 " + str(data['ms1_accuracy'])
-
-        if (data['neural_network_classifier'] == "Double-Pass Mode"):
-            command += " --double-search"
-        elif (data['neural_network_classifier'] == "Off"):
-            command += " --no-nn"
-
-        if data['unrelated_runs']:
-            command += " --individual-mass-acc --individual-windows"
-        if data['peptidoforms']:
-            command += " --peptidoforms"
-
-        if not data['no_shared_spectra']:
-            command += " --int-removal 0"
-
-        if data['mbr']:
-            command += " --reanalyse"
-
-        if ['heuristic_protein_interface']:
-            command += " --relaxed-prot-inf"
-
-        if (data['library_generation'] == "IDs profiling"):
-            command += " --id-profiling"
-        elif (data['library_generation'] == "IDs, RT and IM profiling"):
-            command += " --rt-profiling"
-        elif (data['library_generation'] == "Smart profiling"):
-            command += " --smart-profiling"
-
-        if (data['protein_inference'] == "Isoform IDs"):
-            command += " --pg-level 0"
-        elif (data['protein_inference'] == "Protein Names (from FASTA)"):
-            command += " --pg-level 1"
-        elif (data['protein_inference'] == "Genes (Species-Specific)"):
-            command += " --pg-level 2 --species-genes"
-        elif (data['protein_inference'] == "Off"):
-            command += " --no-prot-inf"
-
-        if (data['quantification_strategy'] == "Legacy (direct)"):
-            command += " --direct-quant"
-        elif (data['quantification_strategy'] == "QuantUMS (high accuracy)"):
-            command += " --high-acc"
-
-        if (data['cross-run_normalization'] == "Global"):
-            command += " --global-norm"
-        elif (data['cross-run_normalization'] == "RT & signal-dep. (experimental)"):
-            command += " --sig-norm"
-        elif (data['cross-run_normalization'] == "Off"):
-            command += " --no-norm"
-
-        if not (data['additional_options'] == ""):
-            command += " " + data['additional_options']
-
-        script = f"""#!/bin/sh
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=20
-#SBATCH --mem=50Gb
-#SBATCH --partition=highmem
-#SBATCH --time=240:00:00
-
-cd {self._home_path}/projects/{project_name}
-
-/gpfs/home/rpark/cluster/DiaNN.sif --threads 20 {command}
+        script = f"""
+        {command}
 """
         script_replaced = script.replace("\r\n", "\n").replace("\r", "\n")
         script_path = f"{project_name}/search/{search_name}/search_command.sh"
@@ -250,7 +153,7 @@ cd {self._home_path}/projects/{project_name}
     def run_search(self, project_name: str, search_name: str):
         scp, ssh = create_scp_client(st.session_state['server_ip'], st.session_state['username'], st.session_state['password'])
 
-        script_path = f"{self._home_path}/projects/{project_name}/search/{search_name}/search_command.sh"
+        script_path = f"{self._home_path}/sage_projects/{project_name}/search/{search_name}/search_command.sh"
 
         ssh.exec_command(f"chmod +x {script_path}")
         stdin, stdout, stderr = ssh.exec_command(f"sbatch {script_path}")

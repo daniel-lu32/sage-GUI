@@ -11,5 +11,7 @@ Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 Requires-Dist: streamlit
 Requires-Dist: fs
+Requires-Dist: fs.sshfs
+Requires-Dist: scp
 
-bla bla bla
+# sage-GUI
