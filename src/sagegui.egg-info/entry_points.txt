@@ -1,0 +1,2 @@
+[console_scripts]
+sagegui = sagegui.run:main

@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+setup.py
+src/sagegui/__init__.py
+src/sagegui/data.py
+src/sagegui/hpc_manager.py
+src/sagegui/run.py
+src/sagegui/gui.py
+src/sagegui/login.py
+src/sagegui/utils.py
+src/sagegui.egg-info/PKG-INFO
+src/sagegui.egg-info/SOURCES.txt
+src/sagegui.egg-info/dependency_links.txt
+src/sagegui.egg-info/entry_points.txt
+src/sagegui.egg-info/requires.txt
+src/sagegui.egg-info/top_level.txt

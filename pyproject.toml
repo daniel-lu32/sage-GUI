@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+
+[project]
+name = "sagegui"
+authors = [
+    {name = "Patrick Garrett", email = "pgarrett@scripps.edu"},
+    {name = "Daniel Lu", email = "dalu@scripps.edu"},
+]
+description = "bla bla bla"
+readme = "README.md"
+requires-python = ">=3.8"
+dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "streamlit", "fs", "fs.sshfs", "scp"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {attr = "sagegui.__version__"}
+
+[project.scripts]
+sagegui = "sagegui.run:main"
