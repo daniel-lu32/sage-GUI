@@ -184,18 +184,19 @@ def search_add_dialog(project: str):
 
     with t1:
         search_parameters = {}
+        database = {}
 
     with t2:
-        selection = st.dataframe(fasta_df, use_container_width=True, hide_index=True, selection_mode="multi-row", on_select="rerun", key='search_fasta_df')
+        selection = st.dataframe(fasta_df, use_container_width=True, hide_index=True, selection_mode="single-row", on_select="rerun", key='search_fasta_df')
         selected_indices = [row for row in selection['selection']['rows']]
         selected_fasta_files = [fasta_df.iloc[i].Name for i in selected_indices]
+        if len(selected_fasta_files) == 1:
+             selected_fasta_files= selected_fasta_files[0]
 
     with t3:
-        selection = st.dataframe(spectra_df, use_container_width=True, hide_index=True, selection_mode="single-row", on_select="rerun", key='search_spectra_df')
+        selection = st.dataframe(spectra_df, use_container_width=True, hide_index=True, selection_mode="multi-row", on_select="rerun", key='search_spectra_df')
         selected_indices = [row for row in selection['selection']['rows']]
         selected_spectra = [spectra_df.iloc[i].Name for i in selected_indices]
-        if len(selected_spectra) == 1:
-             selected_spectra= selected_spectra[0]
 
     if not selected_fasta_files:
         st.warning('No fasta files selected')
@@ -207,9 +208,9 @@ def search_add_dialog(project: str):
         st.warning('No spectra selected')
 
     c1, c2 = st.columns(2)
-    if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm", disabled= not selected_fasta_files or not search_name or not selected_spectra):
-        fs.add_search(project, search_name, search_parameters, selected_fasta_files, selected_spectra)
-        fs.run_search(project, search_name)
+    if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm"):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
+        fs.add_search(project, search_name, search_parameters)
+        #fs.run_search(project, search_name)
         st.rerun()
     if c2.button("Cancel", use_container_width=True, type="secondary", key="search_add_dialog_cancel"):
         st.rerun()

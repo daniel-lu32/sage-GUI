@@ -9,6 +9,7 @@ from scp import SCPClient
 import io
 import pandas as pd
 import streamlit as st
+import json
 
 def create_scp_client(server_ip, username, password):
     ssh = paramiko.SSHClient()
@@ -124,7 +125,7 @@ class RemoteProjectFileSystem:
             raise ResourceNotFound(f"No spectra directory found for project '{project_name}'.")
         return self.project_fs.listdir(spectra_dir)
 
-    def add_search(self, project_name: str, search_name: str, data: Dict[str, Any], selected_fasta_files, selected_spectra):
+    def add_search(self, project_name: str, search_name: str, data: Dict[str, Any]):
         project_dir = f"{project_name}"
         search_dir = f"{project_name}/search/{search_name}"
 
@@ -139,10 +140,21 @@ class RemoteProjectFileSystem:
         # Create the search directory
         self.project_fs.makedir(search_dir, recreate=True)
 
-        command = ""
+        config_path = f'{search_dir}/config.json'
+        with self.project_fs.open(config_path, 'w') as config_file:
+            json.dump(data, config_file)
 
-        script = f"""
-        {command}
+        script = f"""#!/bin/sh
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=20
+#SBATCH --mem=50Gb
+#SBATCH --partition=highmem
+#SBATCH --time=240:00:00
+
+cd {self._home_path}/sage_projects/{project_name}
+
+SAGE_LOG=trace RAYON_NUM_THREADS=20 /gpfs/home/rpark/cluster/sage/sage {self._home_path}/sage_projects/{project_name}/search/{search_name}/config.json
 """
         script_replaced = script.replace("\r\n", "\n").replace("\r", "\n")
         script_path = f"{project_name}/search/{search_name}/search_command.sh"
