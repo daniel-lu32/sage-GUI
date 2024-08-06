@@ -149,12 +149,12 @@ class RemoteProjectFileSystem:
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
 #SBATCH --mem=50Gb
+#SBATCH --time=10:00:00
 #SBATCH --partition=highmem
-#SBATCH --time=240:00:00
 
-cd {self._home_path}/sage_projects/{project_name}
+cd $SLURM_SUBMIT_DIR
 
-SAGE_LOG=trace RAYON_NUM_THREADS=20 /gpfs/home/rpark/cluster/sage/sage {self._home_path}/sage_projects/{project_name}/search/{search_name}/config.json
+/gpfs/home/rpark/cluster/sage_clean/sage {self._home_path}/sage_projects/{project_name}/search/{search_name}/config.json
 """
         script_replaced = script.replace("\r\n", "\n").replace("\r", "\n")
         script_path = f"{project_name}/search/{search_name}/search_command.sh"

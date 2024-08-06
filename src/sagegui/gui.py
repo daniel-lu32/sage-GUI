@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from utils import get_fs
 from login import login
-import json
+import ast
 
 login()
 
@@ -173,6 +173,12 @@ with t3:
         if c2.button("Download", use_container_width=True, type="secondary", key="spectra_download", disabled=len(selected_files)!=1):
             spectra_download_dialog(selected_project, selected_files[0])
 
+def convert_to_list(value):
+    try:
+        return ast.literal_eval(value)
+    except (ValueError, SyntaxError):
+        return float(value)
+
 @st.experimental_dialog("Add Search", width='large')
 def search_add_dialog(project: str):
 
@@ -215,10 +221,12 @@ def search_add_dialog(project: str):
         database['static_mods'] = None
         database['variable_mods'] = None
 
-        st.subheader("Modifications")
         c1, c2 = st.columns(2)
-        static_mods = c1.text_area("Static Modifications (Optional, Type a Dictionary with Characters as Keys and Floats as Values):")
-        variable_mods = c2.text_area("Variable Modifications (Optional, Type a Dictionary with Characters as Keys and Floats or Lists of Floats as Values):")
+
+        c1.subheader("Static Modifications")
+        c2.subheader("Variable Modifications")
+        static_mods = c1.data_editor(pd.DataFrame(columns=['Amino Acid and Terminus', 'Modification']), use_container_width=True, num_rows="dynamic", key="static_mods")
+        variable_mods = c2.data_editor(pd.DataFrame(columns=['Amino Acid and Terminus', 'Modification']), use_container_width=True, num_rows="dynamic", key="variable_mods")
 
         st.subheader("FASTA Database and Decoy Generation")
         c1, c2, c3 = st.columns(3)
@@ -308,10 +316,12 @@ def search_add_dialog(project: str):
     c1, c2 = st.columns(2)
     if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm"):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
         database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta}"
-        if static_mods:
-            database['static_mods'] = json.loads(static_mods)
-        if variable_mods:
-            database['variable_mods'] = json.loads(variable_mods)
+        if not static_mods.empty:
+            static_mods['Modification'] = static_mods['Modification'].apply(convert_to_list)
+            database['static_mods'] = static_mods.set_index('Amino Acid and Terminus')['Modification'].to_dict()
+        if not variable_mods.empty:
+            variable_mods['Modification'] = variable_mods['Modification'].apply(convert_to_list)
+            database['variable_mods'] = variable_mods.set_index('Amino Acid and Terminus')['Modification'].to_dict()
 
         search_parameters['database'] = database
         search_parameters['mzml_paths'] = selected_spectra
