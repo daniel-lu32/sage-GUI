@@ -184,7 +184,83 @@ def search_add_dialog(project: str):
 
     with t1:
         search_parameters = {}
+
         database = {}
+        database['bucket_size'] = st.number_input("Bucket Size:", min_value=8192, max_value=65536, value=32768)
+
+        enzyme = {}
+        enzyme['missed_cleavages'] = st.number_input("Missed Cleavages:", value=1)
+        enzyme['min_len'] = st.number_input("Minimum Amino Acid Length:", value=5)
+        enzyme['max_len'] = st.number_input("Maximum Amino Acid Length:", value=50)
+        enzyme['cleave_at'] = st.text_input("Amino Acids to Cleave at:", value="KR")
+        enzyme['restrict'] = st.text_input("Do Not Cleave if This Amino Acid Follows Cleavage Site:", value="P")
+        enzyme['c_terminal'] = st.checkbox("Cleave at C-Terminus of Matching Amino Acid", value=True)
+        enzyme['semi_enzymatic'] = st.checkbox("Perform Semi-Enzymatic Digest", value=False)
+        database['enzyme'] = enzyme
+
+        database['fragment_min_mz'] = st.number_input("Minimum Fragment Mass to Search:", value=150.0)
+        database['fragment_max_mz'] = st.number_input("Maximum Fragment Mass to Search:", value=2000.0)
+        database['peptide_min_mass'] = st.number_input("Minimum Monoisotopic Peptide Mass to Fragment in silico:", value=500.0)
+        database['peptide_max_mass'] = st.number_input("Maximum Monoisotopic Peptide Mass to Fragmentin silico:", value=5000.0)
+        database['ion_kinds'] = st.multiselect("Fragment Ions to Produce:", options=["a", "b", "c", "x", "y", "z"], default=["b", "y"])
+        database['min_ion_index'] = st.number_input("Minimum Ion Index:", value=2)
+
+        # TODO: complete static_mods and variable_mods
+        database['static_mods'] = None
+        database['variable_mods'] = None
+
+        database['max_variable_mods'] = st.number_input("Maximum Variable Modifications:", value=2)
+        database['decoy_tag'] = st.text_input("Decoy Tag:", value="rev_")
+        database['generate_decoys'] = st.checkbox("Generate Decoys", value=True)
+
+        quant = {}
+        quant['tmt'] = st.selectbox("Tandem Mass Tag:", options=[None, "Tmt6", "Tmt10", "Tmt11", "Tmt16", "Tmt18"])
+        quant['tmt_settings'] = {
+            "level": st.number_input("MS-Level for TMT Quantification:", value=3),
+            "sn": st.checkbox("Use Signal/Noise Instead of Intensity for TMT Quantification", value=False)
+        }
+        quant['lfq'] = None
+        if st.checkbox("Perform Label-Free Quantification", value=False):
+            quant['lfq'] = True
+        quant['lfq_settings'] = {
+            "peak_scoring": st.selectbox("Peak Scoring Method:", options=["Hybrid", "RetentionTime", "SpectralAngle"]),
+            "integration": st.selectbox("Peak Intensity Integration Method:", options=["Sum", "Max"]),
+            "spectral_angle": st.number_input("Threshold for Normalized Spectral Angle Similarity Measure:", min_value=0.0, max_value=1.0, value=0.7),
+            "ppm_tolerance": st.number_input("Tolerance for Matching MS1 Ions in PPM:", value=5.0)
+        }
+        search_parameters['quant'] = quant
+
+        precursor_tolerance_type = st.selectbox("Precursor Tolerance Type", options=["Absolute", "Relative"])
+        precursor_tolerance_lower_bound = st.number_input("Precursor Tolerance Lower Bound:", value=-10.0)
+        precursor_tolerance_upper_bound = st.number_input("Precursor Tolerance Upper Bound:", value=10.0)
+        if precursor_tolerance_type == "Absolute":
+            search_parameters['precursor_tol'] = {"da": [precursor_tolerance_lower_bound, precursor_tolerance_upper_bound]}
+        else:
+            search_parameters['precursor_tol'] = {"ppm": [precursor_tolerance_lower_bound, precursor_tolerance_upper_bound]}
+
+        fragment_tolerance_type = st.selectbox("Fragment Tolerance Type", options=["Absolute", "Relative"])
+        fragment_tolerance_lower_bound = st.number_input("Fragment Tolerance Lower Bound:", value=-10.0)
+        fragment_tolerance_upper_bound = st.number_input("Fragment Tolerance Upper Bound:", value=10.0)
+        if fragment_tolerance_type == "Absolute":
+            search_parameters['precursor_tol'] = {"da": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
+        else:
+            search_parameters['precursor_tol'] = {"ppm": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
+
+        search_parameters['precursor_charge'] = [st.number_input("Precursor Charge States Lower Bound:", value=2), st.number_input("Precursor Charge States Upper Bound:", value=4)]
+        search_parameters['isotope_errors'] = [st.number_input("Isotope Error of C13 Neutron Lower Bound:", value=0), st.number_input("Isotope Error of C13 Neutron Upper Bound:", value=0)]
+        search_parameters['wide_window'] = st.checkbox("Wide Window Mode", value=False)
+
+        search_parameters['deisotope'] = st.checkbox("Perform Deisotoping and Charge State Deconvolution on MS2 Spectra", value=False)
+        search_parameters['min_peaks'] = st.number_input("Only Process MS2 Spectra with At Least This Many Peaks:", value=15)
+        search_parameters['max_peaks'] = st.number_input("Take This Many of the Most Intense MS2 Peaks to Search:", value=150)
+        search_parameters['min_matched_peaks'] = st.number_input("Minimum Number of Matched b/y Ions Required for Scoring and Reporting PSMs:", value=4)
+        search_parameters['max_fragment_charge'] = st.number_input("Maximum Fragment Ion Charge States to Consider (Use Precursor Charge - 1):", value=None)
+
+        search_parameters['chimera'] = st.checkbox("Search for Chimeric/Co-Fragmenting PSMs", value=False)
+        search_parameters['report_psms'] = st.number_input("Number of PSMs to Report for Each Spectrum:", value=1)
+        search_parameters['predict_rt'] = st.checkbox("Use Retention Time Prediction Model", value=True)
+
+        search_parameters['output_directory'] = f"{fs._home_path}/sage_projects/{project}/search/{search_name}"
 
     with t2:
         selection = st.dataframe(fasta_df, use_container_width=True, hide_index=True, selection_mode="single-row", on_select="rerun", key='search_fasta_df')
@@ -200,15 +276,17 @@ def search_add_dialog(project: str):
 
     if not selected_fasta_files:
         st.warning('No fasta files selected')
-
     if not search_name:
         st.warning('No search name')
-
     if not selected_spectra:
         st.warning('No spectra selected')
 
     c1, c2 = st.columns(2)
     if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm"):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
+        database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta_files}"
+        search_parameters['database'] = database
+        search_parameters['mzml_paths'] = selected_spectra
+
         fs.add_search(project, search_name, search_parameters)
         #fs.run_search(project, search_name)
         st.rerun()
