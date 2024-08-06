@@ -64,7 +64,7 @@ def fasta_add_dialog(project: str):
     c1, c2 = st.columns(2)
     if c1.button("Confirm", use_container_width=True, type="primary", key="fasta_add_dialog_confirm"):
         for file in fasta_files:
-            fs.add_fasta_file(project, file.name, file.getvalue())
+            fs.add_fasta(project, file.name, file.getvalue())
         st.rerun()
     if c2.button("Cancel", use_container_width=True, type="secondary", key="fasta_add_dialog_cancel"):
         st.rerun()
@@ -75,7 +75,7 @@ def fasta_delete_dialog(project: str, selected_file: str):
     c1, c2 = st.columns(2)
     if c1.button("Confirm", use_container_width=True, type="secondary", key="fasta_delete_dialog_confirm"):
         for file_name in selected_file:
-            fs.remove_fasta_file(project, file_name)
+            fs.remove_fasta(project, file_name)
         st.rerun()
     if c2.button("Cancel", use_container_width=True, type="primary", key="fasta_delete_dialog_cancel"):
         st.rerun()
@@ -102,7 +102,7 @@ with t2:
     if fs.list_projects():
         st.subheader("FASTA Files")
         st.markdown("Click \"Add\" to upload FASTA files. To delete, select FASTA files and click \"Delete.\" To download, select ONE FASTA file and click \"Download.\"")
-        df = pd.DataFrame(fs.list_fasta_files(selected_project), columns=['Name'])
+        df = pd.DataFrame(fs.list_fasta(selected_project), columns=['Name'])
         selection = st.dataframe(df, use_container_width=True, hide_index=True, selection_mode="multi-row", on_select="rerun", key='fasta_files_df')
         selected_indices = [row for row in selection['selection']['rows']]
         selected_files = [df.iloc[i].Name for i in selected_indices]
@@ -176,7 +176,7 @@ with t3:
 @st.experimental_dialog("Add Search", width='large')
 def search_add_dialog(project: str):
 
-    fasta_df = pd.DataFrame(fs.list_fasta_files(project), columns=['Name'])
+    fasta_df = pd.DataFrame(fs.list_fasta(project), columns=['Name'])
     spectra_df = pd.DataFrame(fs.list_spectra(project), columns=['Name'])
 
     search_name = st.text_input("Search Name:")
@@ -187,97 +187,118 @@ def search_add_dialog(project: str):
         search_parameters = {}
 
         database = {}
+        st.subheader("Fragment Index Construction")
         database['bucket_size'] = st.number_input("Bucket Size:", min_value=8192, max_value=65536, value=32768)
 
         enzyme = {}
-        enzyme['missed_cleavages'] = st.number_input("Missed Cleavages:", value=1)
-        enzyme['min_len'] = st.number_input("Minimum Amino Acid Length:", value=5)
-        enzyme['max_len'] = st.number_input("Maximum Amino Acid Length:", value=50)
-        enzyme['cleave_at'] = st.text_input("Amino Acids to Cleave at:", value="KR")
-        enzyme['restrict'] = st.text_input("Do Not Cleave if This Amino Acid Follows Cleavage Site:", value="P")
-        enzyme['c_terminal'] = st.checkbox("Cleave at C-Terminus of Matching Amino Acid", value=True)
-        enzyme['semi_enzymatic'] = st.checkbox("Perform Semi-Enzymatic Digest", value=False)
+        st.subheader("Enzyme Information")
+        c1, c2, c3 = st.columns(3)
+        enzyme['missed_cleavages'] = c1.number_input("Missed Cleavages:", value=1)
+        enzyme['min_len'] = c2.number_input("Minimum Amino Acid Length:", value=5)
+        enzyme['max_len'] = c3.number_input("Maximum Amino Acid Length:", value=50)
+        c1, c2 = st.columns(2)
+        enzyme['cleave_at'] = c1.text_input("Amino Acids to Cleave at:", value="KR")
+        enzyme['restrict'] = c2.text_input("Do Not Cleave if This Amino Acid Follows Cleavage Site:", value="P")
+        enzyme['c_terminal'] = c1.checkbox("Cleave at C-Terminus of Matching Amino Acid", value=True)
+        enzyme['semi_enzymatic'] = c2.checkbox("Perform Semi-Enzymatic Digest", value=False)
         database['enzyme'] = enzyme
 
-        database['fragment_min_mz'] = st.number_input("Minimum Fragment Mass to Search:", value=150.0)
-        database['fragment_max_mz'] = st.number_input("Maximum Fragment Mass to Search:", value=2000.0)
-        database['peptide_min_mass'] = st.number_input("Minimum Monoisotopic Peptide Mass to Fragment in silico:", value=500.0)
-        database['peptide_max_mass'] = st.number_input("Maximum Monoisotopic Peptide Mass to Fragmentin silico:", value=5000.0)
+        st.subheader("Fragment Settings")
+        c1, c2 = st.columns(2)
+        database['fragment_min_mz'] = c1.number_input("Minimum Fragment Mass to Search:", value=150.0)
+        database['fragment_max_mz'] = c2.number_input("Maximum Fragment Mass to Search:", value=2000.0)
+        database['peptide_min_mass'] = c1.number_input("Minimum Monoisotopic Peptide Mass to Fragment in silico:", value=500.0)
+        database['peptide_max_mass'] = c2.number_input("Maximum Monoisotopic Peptide Mass to Fragmentin silico:", value=5000.0)
         database['ion_kinds'] = st.multiselect("Fragment Ions to Produce:", options=["a", "b", "c", "x", "y", "z"], default=["b", "y"])
         database['min_ion_index'] = st.number_input("Minimum Ion Index:", value=2)
 
         database['static_mods'] = None
         database['variable_mods'] = None
 
-        static_mods = st.text_area("Static Modifications (Type a Dictionary with Characters as Keys and Floats as Values):")
-        variable_mods = st.text_area("Variable Modifications (Type a Dictionary with Characters as Keys and Floats or Lists of Floats as Values):")
+        st.subheader("Modifications")
+        c1, c2 = st.columns(2)
+        static_mods = c1.text_area("Static Modifications (Optional, Type a Dictionary with Characters as Keys and Floats as Values):")
+        variable_mods = c2.text_area("Variable Modifications (Optional, Type a Dictionary with Characters as Keys and Floats or Lists of Floats as Values):")
 
-        database['max_variable_mods'] = st.number_input("Maximum Variable Modifications:", value=2)
-        database['decoy_tag'] = st.text_input("Decoy Tag:", value="rev_")
-        database['generate_decoys'] = st.checkbox("Generate Decoys", value=True)
+        st.subheader("FASTA Database and Decoy Generation")
+        c1, c2, c3 = st.columns(3)
+        database['max_variable_mods'] = c1.number_input("Maximum Variable Modifications:", value=2)
+        database['decoy_tag'] = c2.text_input("Decoy Tag:", value="rev_")
+        database['generate_decoys'] = c3.checkbox("Generate Decoys", value=True)
 
         quant = {}
-        quant['tmt'] = st.selectbox("Tandem Mass Tag:", options=[None, "Tmt6", "Tmt10", "Tmt11", "Tmt16", "Tmt18"])
+        st.subheader("Quantification")
+        c1, c2, c3 = st.columns(3)
+        quant['tmt'] = c1.selectbox("Tandem Mass Tag:", options=[None, "Tmt6", "Tmt10", "Tmt11", "Tmt16", "Tmt18"])
         quant['tmt_settings'] = {
-            "level": st.number_input("MS-Level for TMT Quantification:", value=3),
-            "sn": st.checkbox("Use Signal/Noise Instead of Intensity for TMT Quantification", value=False)
+            "level": c2.number_input("MS-Level for TMT Quantification:", value=3),
+            "sn": c3.checkbox("Use Signal/Noise Instead of Intensity for TMT Quantification", value=False)
         }
         quant['lfq'] = None
         if st.checkbox("Perform Label-Free Quantification", value=False):
             quant['lfq'] = True
+
+        c1, c2 = st.columns(2)
         quant['lfq_settings'] = {
-            "peak_scoring": st.selectbox("Peak Scoring Method:", options=["Hybrid", "RetentionTime", "SpectralAngle"]),
-            "integration": st.selectbox("Peak Intensity Integration Method:", options=["Sum", "Max"]),
-            "spectral_angle": st.number_input("Threshold for Normalized Spectral Angle Similarity Measure:", min_value=0.0, max_value=1.0, value=0.7),
-            "ppm_tolerance": st.number_input("Tolerance for Matching MS1 Ions in PPM:", value=5.0)
+            "peak_scoring": c1.selectbox("Peak Scoring Method:", options=["Hybrid", "RetentionTime", "SpectralAngle"]),
+            "integration": c2.selectbox("Peak Intensity Integration Method:", options=["Sum", "Max"]),
+            "spectral_angle": c1.number_input("Normalized Spectral Angle Similarity Measure Threshold:", min_value=0.0, max_value=1.0, value=0.7),
+            "ppm_tolerance": c2.number_input("Tolerance for Matching MS1 Ions in PPM:", value=5.0)
         }
         search_parameters['quant'] = quant
 
-        precursor_tolerance_type = st.selectbox("Precursor Tolerance Type", options=["Absolute", "Relative"])
-        precursor_tolerance_lower_bound = st.number_input("Precursor Tolerance Lower Bound:", value=-10.0)
-        precursor_tolerance_upper_bound = st.number_input("Precursor Tolerance Upper Bound:", value=10.0)
+        st.subheader("Search Tolerances")
+        c1, c2, c3 = st.columns(3)
+        precursor_tolerance_type = c1.selectbox("Precursor Tolerance Type", options=["Absolute", "Relative"])
+        precursor_tolerance_lower_bound = c2.number_input("Precursor Tolerance Lower Bound:", value=-10.0)
+        precursor_tolerance_upper_bound = c3.number_input("Precursor Tolerance Upper Bound:", value=10.0)
         if precursor_tolerance_type == "Absolute":
             search_parameters['precursor_tol'] = {"da": [precursor_tolerance_lower_bound, precursor_tolerance_upper_bound]}
         else:
             search_parameters['precursor_tol'] = {"ppm": [precursor_tolerance_lower_bound, precursor_tolerance_upper_bound]}
 
-        fragment_tolerance_type = st.selectbox("Fragment Tolerance Type", options=["Absolute", "Relative"])
-        fragment_tolerance_lower_bound = st.number_input("Fragment Tolerance Lower Bound:", value=-10.0)
-        fragment_tolerance_upper_bound = st.number_input("Fragment Tolerance Upper Bound:", value=10.0)
+        fragment_tolerance_type = c1.selectbox("Fragment Tolerance Type", options=["Absolute", "Relative"])
+        fragment_tolerance_lower_bound = c2.number_input("Fragment Tolerance Lower Bound:", value=-10.0)
+        fragment_tolerance_upper_bound = c3.number_input("Fragment Tolerance Upper Bound:", value=10.0)
         if fragment_tolerance_type == "Absolute":
             search_parameters['precursor_tol'] = {"da": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
         else:
             search_parameters['precursor_tol'] = {"ppm": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
 
-        search_parameters['precursor_charge'] = [st.number_input("Precursor Charge States Lower Bound:", value=2), st.number_input("Precursor Charge States Upper Bound:", value=4)]
-        search_parameters['isotope_errors'] = [st.number_input("Isotope Error of C13 Neutron Lower Bound:", value=0), st.number_input("Isotope Error of C13 Neutron Upper Bound:", value=0)]
+        c1, c2 = st.columns(2)
+        search_parameters['precursor_charge'] = [c1.number_input("Precursor Charge States Lower Bound:", value=2), c2.number_input("Precursor Charge States Upper Bound:", value=4)]
+        search_parameters['isotope_errors'] = [c1.number_input("Isotope Error of C13 Neutron Lower Bound:", value=0), c2.number_input("Isotope Error of C13 Neutron Upper Bound:", value=0)]
         search_parameters['wide_window'] = st.checkbox("Wide Window Mode", value=False)
 
+        st.subheader("Spectral Processing")
         search_parameters['deisotope'] = st.checkbox("Perform Deisotoping and Charge State Deconvolution on MS2 Spectra", value=False)
-        search_parameters['min_peaks'] = st.number_input("Only Process MS2 Spectra with At Least This Many Peaks:", value=15)
-        search_parameters['max_peaks'] = st.number_input("Take This Many of the Most Intense MS2 Peaks to Search:", value=150)
-        search_parameters['min_matched_peaks'] = st.number_input("Minimum Number of Matched b/y Ions Required for Scoring and Reporting PSMs:", value=4)
-        search_parameters['max_fragment_charge'] = st.number_input("Maximum Fragment Ion Charge States to Consider (Use Precursor Charge - 1):", value=None)
+        c1, c2 = st.columns(2)
+        search_parameters['min_peaks'] = c1.number_input("Only Process MS2 Spectra with At Least This Many Peaks:", value=15)
+        search_parameters['max_peaks'] = c2.number_input("Take This Many of the Most Intense MS2 Peaks to Search:", value=150)
+        search_parameters['min_matched_peaks'] = c1.number_input("Minimum Number of Matched b/y Ions Required for Scoring and Reporting PSMs:", value=4)
+        search_parameters['max_fragment_charge'] = c2.number_input("Maximum Fragment Ion Charge States to Consider (Use Precursor Charge - 1):", value=None)
 
-        search_parameters['chimera'] = st.checkbox("Search for Chimeric/Co-Fragmenting PSMs", value=False)
+        st.subheader("Additional Settings")
+        c1, c2 = st.columns(2)
         search_parameters['report_psms'] = st.number_input("Number of PSMs to Report for Each Spectrum:", value=1)
-        search_parameters['predict_rt'] = st.checkbox("Use Retention Time Prediction Model", value=True)
+        search_parameters['chimera'] = c1.checkbox("Search for Chimeric/Co-Fragmenting PSMs", value=False)
+        search_parameters['predict_rt'] = c2.checkbox("Use Retention Time Prediction Model", value=True)
 
         search_parameters['output_directory'] = f"{fs._home_path}/sage_projects/{project}/search/{search_name}"
 
     with t2:
         selection = st.dataframe(fasta_df, use_container_width=True, hide_index=True, selection_mode="single-row", on_select="rerun", key='search_fasta_df')
         selected_indices = [row for row in selection['selection']['rows']]
-        selected_fasta_files = [fasta_df.iloc[i].Name for i in selected_indices]
-        if len(selected_fasta_files) == 1:
-             selected_fasta_files= selected_fasta_files[0]
+        selected_fasta = [fasta_df.iloc[i].Name for i in selected_indices]
+        if len(selected_fasta) == 1:
+             selected_fasta= selected_fasta[0]
 
     with t3:
         selection = st.dataframe(spectra_df, use_container_width=True, hide_index=True, selection_mode="multi-row", on_select="rerun", key='search_spectra_df')
         selected_indices = [row for row in selection['selection']['rows']]
         selected_spectra = [spectra_df.iloc[i].Name for i in selected_indices]
 
-    if not selected_fasta_files:
+    if not selected_fasta:
         st.warning('No fasta files selected')
     if not search_name:
         st.warning('No search name')
@@ -286,7 +307,7 @@ def search_add_dialog(project: str):
 
     c1, c2 = st.columns(2)
     if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm"):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
-        database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta_files}"
+        database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta}"
         if static_mods:
             database['static_mods'] = json.loads(static_mods)
         if variable_mods:

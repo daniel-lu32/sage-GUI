@@ -83,7 +83,7 @@ class RemoteProjectFileSystem:
     def list_projects(self) -> List[str]:
         return self.project_fs.listdir(".")
 
-    def add_fasta_file(self, project_name: str, file_name: str, data: bytes):
+    def add_fasta(self, project_name: str, file_name: str, data: bytes):
         fasta_path = f"{project_name}/fasta/{file_name}"
         if not self.project_fs.exists(f"{project_name}/fasta"):
             raise ResourceNotFound(f"Project '{project_name}' does not exist or has no 'fasta' directory.")
@@ -91,14 +91,14 @@ class RemoteProjectFileSystem:
         with self.project_fs.open(fasta_path, 'wb') as fasta_file:
             fasta_file.write(data)
 
-    def remove_fasta_file(self, project_name: str, file_name: str):
+    def remove_fasta(self, project_name: str, file_name: str):
         fasta_path = f"{project_name}/fasta/{file_name}"
         if not self.project_fs.exists(fasta_path):
             raise ResourceNotFound(f"FASTA file '{file_name}' not found in project '{project_name}'.")
 
         self.project_fs.remove(fasta_path)
 
-    def list_fasta_files(self, project_name: str) -> List[str]:
+    def list_fasta(self, project_name: str) -> List[str]:
         fasta_dir = f"{project_name}/fasta"
         if not self.project_fs.exists(fasta_dir):
             raise ResourceNotFound(f"No fasta directory found for project '{project_name}'.")
