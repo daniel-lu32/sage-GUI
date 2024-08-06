@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from utils import get_fs
 from login import login
+import json
 
 login()
 
@@ -205,9 +206,11 @@ def search_add_dialog(project: str):
         database['ion_kinds'] = st.multiselect("Fragment Ions to Produce:", options=["a", "b", "c", "x", "y", "z"], default=["b", "y"])
         database['min_ion_index'] = st.number_input("Minimum Ion Index:", value=2)
 
-        # TODO: complete static_mods and variable_mods
         database['static_mods'] = None
         database['variable_mods'] = None
+
+        static_mods = st.text_area("Static Modifications (Type a Dictionary with Characters as Keys and Floats as Values):")
+        variable_mods = st.text_area("Variable Modifications (Type a Dictionary with Characters as Keys and Floats or Lists of Floats as Values):")
 
         database['max_variable_mods'] = st.number_input("Maximum Variable Modifications:", value=2)
         database['decoy_tag'] = st.text_input("Decoy Tag:", value="rev_")
@@ -284,6 +287,11 @@ def search_add_dialog(project: str):
     c1, c2 = st.columns(2)
     if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm"):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
         database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta_files}"
+        if static_mods:
+            database['static_mods'] = json.loads(static_mods)
+        if variable_mods:
+            database['variable_mods'] = json.loads(variable_mods)
+
         search_parameters['database'] = database
         search_parameters['mzml_paths'] = selected_spectra
 
