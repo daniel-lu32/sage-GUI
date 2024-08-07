@@ -187,7 +187,7 @@ def search_add_dialog(project: str):
 
     search_name = st.text_input("Search Name:")
 
-    t1, t2, t3 = st.tabs(['Search Parameters', 'Data Files', 'Spectral Libraries'])
+    t1, t2, t3, t4, t5, t6 = st.tabs(['Fragment Index Construction', 'Quantification', 'Search Tolerances', 'Spectral Processing and More', 'FASTA', 'Spectra'])
 
     with t1:
         search_parameters = {}
@@ -234,6 +234,7 @@ def search_add_dialog(project: str):
         database['decoy_tag'] = c2.text_input("Decoy Tag:", value="rev_")
         database['generate_decoys'] = c3.checkbox("Generate Decoys", value=True)
 
+    with t2:
         quant = {}
         st.subheader("Quantification")
         c1, c2, c3 = st.columns(3)
@@ -255,6 +256,7 @@ def search_add_dialog(project: str):
         }
         search_parameters['quant'] = quant
 
+    with t3:
         st.subheader("Search Tolerances")
         c1, c2, c3 = st.columns(3)
         precursor_tolerance_type = c1.selectbox("Precursor Tolerance Type", options=["Absolute", "Relative"])
@@ -278,6 +280,7 @@ def search_add_dialog(project: str):
         search_parameters['isotope_errors'] = [c1.number_input("Isotope Error of C13 Neutron Lower Bound:", value=0), c2.number_input("Isotope Error of C13 Neutron Upper Bound:", value=0)]
         search_parameters['wide_window'] = st.checkbox("Wide Window Mode", value=False)
 
+    with t4:
         st.subheader("Spectral Processing")
         search_parameters['deisotope'] = st.checkbox("Perform Deisotoping and Charge State Deconvolution on MS2 Spectra", value=False)
         c1, c2 = st.columns(2)
@@ -294,14 +297,14 @@ def search_add_dialog(project: str):
 
         search_parameters['output_directory'] = f"{fs._home_path}/sage_projects/{project}/search/{search_name}"
 
-    with t2:
+    with t5:
         selection = st.dataframe(fasta_df, use_container_width=True, hide_index=True, selection_mode="single-row", on_select="rerun", key='search_fasta_df')
         selected_indices = [row for row in selection['selection']['rows']]
         selected_fasta = [fasta_df.iloc[i].Name for i in selected_indices]
         if len(selected_fasta) == 1:
              selected_fasta= selected_fasta[0]
 
-    with t3:
+    with t6:
         selection = st.dataframe(spectra_df, use_container_width=True, hide_index=True, selection_mode="multi-row", on_select="rerun", key='search_spectra_df')
         selected_indices = [row for row in selection['selection']['rows']]
         selected_spectra = [spectra_df.iloc[i].Name for i in selected_indices]
