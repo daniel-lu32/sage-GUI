@@ -202,9 +202,10 @@ def search_add_dialog(project: str):
         enzyme['missed_cleavages'] = c1.number_input("Missed Cleavages:", value=1)
         enzyme['min_len'] = c2.number_input("Minimum Amino Acid Length:", value=5)
         enzyme['max_len'] = c3.number_input("Maximum Amino Acid Length:", value=50)
+
         c1, c2 = st.columns(2)
-        enzyme['cleave_at'] = c1.text_input("Amino Acids to Cleave at:", value="KR")
-        enzyme['restrict'] = c2.text_input("Do Not Cleave if This Amino Acid Follows Cleavage Site:", value="P")
+        enzyme['cleave_at'] = c1.text_input("Amino Acids to Cleave at (Leave Blank for Non-Enzymatic, Type \"$\" for No Digestion):", value="KR")
+        enzyme['restrict'] = c2.text_input("Do Not Cleave if This Amino Acid Follows Cleavage Site (Single Character Only):", value="P")
         enzyme['c_terminal'] = c1.checkbox("Cleave at C-Terminus of Matching Amino Acid", value=True)
         enzyme['semi_enzymatic'] = c2.checkbox("Perform Semi-Enzymatic Digest", value=False)
         database['enzyme'] = enzyme
@@ -221,8 +222,9 @@ def search_add_dialog(project: str):
         database['static_mods'] = None
         database['variable_mods'] = None
 
-        c1, c2 = st.columns(2)
+        st.dataframe(pd.DataFrame({"Syntax": ["^X", "$X", "[X", "]X"], "Modification": ["Modification to be applied to amino acid X if it appears at the N-terminus of a peptide", "Modification to be applied to amino acid X if it appears at the C-terminus of a peptide", "Modification to be applied to amino acid X if it appears at the N-terminus of a protein", "Modification to be applied to amino acid X if it appears at the C-terminus of a protein"]}, columns=["Syntax", "Meaning"]), use_container_width=True, hide_index=True)
 
+        c1, c2 = st.columns(2)
         c1.subheader("Static Modifications")
         c2.subheader("Variable Modifications")
         static_mods = c1.data_editor(pd.DataFrame(columns=['Amino Acid and Terminus', 'Modification']), use_container_width=True, num_rows="dynamic", key="static_mods")
