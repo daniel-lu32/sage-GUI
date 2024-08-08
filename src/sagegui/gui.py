@@ -179,6 +179,23 @@ def convert_to_list(value):
     except (ValueError, SyntaxError):
         return float(value)
 
+def check_modification_syntax(list_of_strings):
+    amino_acids = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y"]
+    modifiers = ["^", "$", "[", "]"]
+    for string in list_of_strings:
+        if string == None:
+            return False
+        elif len(string) == 1:
+            if not (string in amino_acids or string in modifiers):
+                return False
+        elif len(string) == 2:
+            if not (string[1] in amino_acids and string[0] in modifiers):
+                return False
+        else:
+            return False
+    return True
+
+
 @st.experimental_dialog("Add Search", width='large')
 def search_add_dialog(project: str):
 
@@ -222,13 +239,15 @@ def search_add_dialog(project: str):
         database['static_mods'] = None
         database['variable_mods'] = None
 
-        st.dataframe(pd.DataFrame({"Syntax": ["^X", "$X", "[X", "]X"], "Modification": ["Modification to be applied to amino acid X if it appears at the N-terminus of a peptide", "Modification to be applied to amino acid X if it appears at the C-terminus of a peptide", "Modification to be applied to amino acid X if it appears at the N-terminus of a protein", "Modification to be applied to amino acid X if it appears at the C-terminus of a protein"]}, columns=["Syntax", "Meaning"]), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame({"Syntax": ["^X", "$X", "[X", "]X"], "Modification": ["Modification to be applied to amino acid X if it appears at the N-terminus of a peptide", "Modification to be applied to amino acid X if it appears at the C-terminus of a peptide", "Modification to be applied to amino acid X if it appears at the N-terminus of a protein", "Modification to be applied to amino acid X if it appears at the C-terminus of a protein"]}, columns=["Syntax", "Modification"]), use_container_width=True, hide_index=True)
 
         c1, c2 = st.columns(2)
         c1.subheader("Static Modifications")
+        c1.markdown("Enter a one-letter amino acid abbreviation (ACDEFGHIKLMNPQRSTVWY), ^, $, [, or ], OR a combination (see above) in the \"Amino Acid\" column and a decimal in the \"Modification\" column.")
         c2.subheader("Variable Modifications")
-        static_mods = c1.data_editor(pd.DataFrame(columns=['Amino Acid and Terminus', 'Modification']), use_container_width=True, num_rows="dynamic", key="static_mods")
-        variable_mods = c2.data_editor(pd.DataFrame(columns=['Amino Acid and Terminus', 'Modification']), use_container_width=True, num_rows="dynamic", key="variable_mods")
+        c2.markdown("Enter a one-letter amino acid abbreviation (ACDEFGHIKLMNPQRSTVWY), ^, $, [, or ], OR a combination (see above) in the \"Amino Acid\" column and a decimal or list of decimals (include hard brackets []) in the \"Modification\" column.")
+        static_mods = c1.data_editor(pd.DataFrame(columns=['Amino Acid', 'Modification']), use_container_width=True, num_rows="dynamic", key="static_mods")
+        variable_mods = c2.data_editor(pd.DataFrame(columns=['Amino Acid', 'Modification']), use_container_width=True, num_rows="dynamic", key="variable_mods")
 
         st.subheader("FASTA Database and Decoy Generation")
         c1, c2, c3 = st.columns(3)
@@ -318,8 +337,13 @@ def search_add_dialog(project: str):
     if not selected_spectra:
         st.warning('No spectra selected')
 
+    if not check_modification_syntax(list(static_mods['Amino Acid'])):
+        st.warning('Invalid Static Modifications')
+    if not check_modification_syntax(list(variable_mods['Amino Acid'])):
+        st.warning('Invalid Variable Modifications')
+
     c1, c2 = st.columns(2)
-    if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm"):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
+    if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm", disabled=not check_modification_syntax(list(static_mods['Amino Acid'])) or not check_modification_syntax(list(variable_mods['Amino Acid']))):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
         database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta}"
         if not static_mods.empty:
             static_mods['Modification'] = static_mods['Modification'].apply(convert_to_list)
