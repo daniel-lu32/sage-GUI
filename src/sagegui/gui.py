@@ -343,7 +343,7 @@ def search_add_dialog(project: str):
         st.warning('Invalid Variable Modifications')
 
     c1, c2 = st.columns(2)
-    if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm", disabled=not check_modification_syntax(list(static_mods['Amino Acid'])) or not check_modification_syntax(list(variable_mods['Amino Acid']))):#, disabled= not selected_fasta_files or not search_name or not selected_spectra):
+    if c1.button("Confirm", use_container_width=True, type="primary", key="search_add_dialog_confirm", disabled=not check_modification_syntax(list(static_mods['Amino Acid'])) or not check_modification_syntax(list(variable_mods['Amino Acid'])) or not selected_fasta or not search_name or not selected_spectra):
         database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta}"
         if not static_mods.empty:
             static_mods['Modification'] = static_mods['Modification'].apply(convert_to_list)
