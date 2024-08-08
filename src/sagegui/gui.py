@@ -347,16 +347,16 @@ def search_add_dialog(project: str):
         database['fasta'] = f"{fs._home_path}/sage_projects/{project}/fasta/{selected_fasta}"
         if not static_mods.empty:
             static_mods['Modification'] = static_mods['Modification'].apply(convert_to_list)
-            database['static_mods'] = static_mods.set_index('Amino Acid and Terminus')['Modification'].to_dict()
+            database['static_mods'] = static_mods.set_index('Amino Acid')['Modification'].to_dict()
         if not variable_mods.empty:
             variable_mods['Modification'] = variable_mods['Modification'].apply(convert_to_list)
-            database['variable_mods'] = variable_mods.set_index('Amino Acid and Terminus')['Modification'].to_dict()
+            database['variable_mods'] = variable_mods.set_index('Amino Acid')['Modification'].to_dict()
 
         search_parameters['database'] = database
         search_parameters['mzml_paths'] = selected_spectra
 
         fs.add_search(project, search_name, search_parameters)
-        #fs.run_search(project, search_name)
+        fs.run_search(project, search_name)
         st.rerun()
     if c2.button("Cancel", use_container_width=True, type="secondary", key="search_add_dialog_cancel"):
         st.rerun()
