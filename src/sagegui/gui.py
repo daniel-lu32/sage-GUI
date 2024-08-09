@@ -292,9 +292,9 @@ def search_add_dialog(project: str):
         fragment_tolerance_lower_bound = c2.number_input("Fragment Tolerance Lower Bound:", value=-10.0)
         fragment_tolerance_upper_bound = c3.number_input("Fragment Tolerance Upper Bound:", value=10.0)
         if fragment_tolerance_type == "Absolute":
-            search_parameters['precursor_tol'] = {"da": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
+            search_parameters['fragment_tol'] = {"da": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
         else:
-            search_parameters['precursor_tol'] = {"ppm": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
+            search_parameters['fragment_tol'] = {"ppm": [fragment_tolerance_lower_bound, fragment_tolerance_upper_bound]}
 
         c1, c2 = st.columns(2)
         search_parameters['precursor_charge'] = [c1.number_input("Precursor Charge States Lower Bound:", value=2), c2.number_input("Precursor Charge States Upper Bound:", value=4)]
