@@ -225,6 +225,10 @@ def search_add_dialog(project: str):
         enzyme['restrict'] = c2.text_input("Do Not Cleave if This Amino Acid Follows Cleavage Site (Single Character Only):", value="P")
         enzyme['c_terminal'] = c1.checkbox("Cleave at C-Terminus of Matching Amino Acid", value=True)
         enzyme['semi_enzymatic'] = c2.checkbox("Perform Semi-Enzymatic Digest", value=False)
+        if enzyme['cleave_at'] == "":
+            enzyme['cleave_at'] = None
+        if enzyme['restrict'] == "":
+            enzyme['restrict'] = None
         database['enzyme'] = enzyme
 
         st.subheader("Fragment Settings")
