@@ -308,7 +308,7 @@ def search_add_dialog(project: str):
         search_parameters['min_peaks'] = c1.number_input("Only Process MS2 Spectra with At Least This Many Peaks:", value=15)
         search_parameters['max_peaks'] = c2.number_input("Take This Many of the Most Intense MS2 Peaks to Search:", value=150)
         search_parameters['min_matched_peaks'] = c1.number_input("Minimum Number of Matched b/y Ions Required for Scoring and Reporting PSMs:", value=4)
-        search_parameters['max_fragment_charge'] = c2.number_input("Maximum Fragment Ion Charge States to Consider (Use Precursor Charge - 1):", value=None)
+        search_parameters['max_fragment_charge'] = c2.number_input("Maximum Fragment Ion Charge States to Consider (Use Precursor Charge - 1):", min_value=0, value=None)
 
         st.subheader("Additional Settings")
         c1, c2 = st.columns(2)
@@ -353,7 +353,11 @@ def search_add_dialog(project: str):
             database['variable_mods'] = variable_mods.set_index('Amino Acid')['Modification'].to_dict()
 
         search_parameters['database'] = database
-        search_parameters['mzml_paths'] = selected_spectra
+
+        path_list = []
+        for spectra in selected_spectra:
+            path_list.append(f"{fs._home_path}/sage_projects/{project}/spectra/{spectra}")
+        search_parameters['mzml_paths'] = path_list
 
         fs.add_search(project, search_name, search_parameters)
         fs.run_search(project, search_name)
