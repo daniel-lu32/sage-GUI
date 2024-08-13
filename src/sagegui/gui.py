@@ -1,6 +1,8 @@
 from typing import List
 import streamlit as st
 import pandas as pd
+import math
+
 from utils import get_fs
 from login import login
 import ast
@@ -211,7 +213,8 @@ def search_add_dialog(project: str):
 
         database = {}
         st.subheader("Fragment Index Construction")
-        database['bucket_size'] = st.number_input("Bucket Size:", min_value=8192, max_value=65536, value=32768)
+        database['bucket_size'] = 2 ** math.floor(math.log2(st.number_input("Bucket Size:", min_value=8192, max_value=65536, value=32768)))
+
 
         enzyme = {}
         st.subheader("Enzyme Information")
@@ -249,7 +252,7 @@ def search_add_dialog(project: str):
         c1.subheader("Static Modifications")
         c1.markdown("Enter a one-letter amino acid abbreviation (ACDEFGHIKLMNPQRSTVWY), ^, $, [, or ], OR a combination (see above) in the \"Amino Acid\" column and a decimal in the \"Modification\" column.")
         c2.subheader("Variable Modifications")
-        c2.markdown("Enter a one-letter amino acid abbreviation (ACDEFGHIKLMNPQRSTVWY), ^, $, [, or ], OR a combination (see above) in the \"Amino Acid\" column and a decimal or list of decimals (include hard brackets []) in the \"Modification\" column.")
+        c2.markdown("Enter a one-letter amino acid abbreviation (ACDEFGHIKLMNPQRSTVWY), ^, $, [, or ], OR a combination (see above) in the \"Amino Acid\" column and a LIST of decimals (include hard brackets []) in the \"Modification\" column.")
         static_mods = c1.data_editor(pd.DataFrame(columns=['Amino Acid', 'Modification']), use_container_width=True, num_rows="dynamic", key="static_mods")
         variable_mods = c2.data_editor(pd.DataFrame(columns=['Amino Acid', 'Modification']), use_container_width=True, num_rows="dynamic", key="variable_mods")
 
